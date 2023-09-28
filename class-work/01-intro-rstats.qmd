@@ -125,6 +125,7 @@ v2
 ```{r}
 library(pins)
 
+# versioned = TRUE is a must-have if working locally
 board <- board_folder("pin-warehouse", versioned = TRUE)
 board |> 
   vetiver_pin_write(v)
