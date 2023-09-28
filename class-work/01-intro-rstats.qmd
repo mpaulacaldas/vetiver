@@ -21,8 +21,40 @@ inspections |>
   count(results)
 ```
 
+What’s the distribution of the outcome results?
+What’s the distribution of the numeric variable total_violations?
+How do results differ across facility type?
+
 ```{r}
-## more EDA here
+summary(inspections$total_violations)
+hist(inspections$total_violations)
+
+summary(inspections$inspection_date)
+
+inspections |> 
+  ggplot(aes(total_violations, fill = results)) +
+  geom_histogram(binwidth = 10, alpha = .5) +
+  facet_grid(facility_type ~ risk, scales = "free_y")
+
+inspections |> 
+  ggplot(aes(results, total_violations)) +
+  geom_boxplot() +
+  geom_jitter(alpha = .3) +
+  facet_grid(risk ~ facility_type, scales = "free_y")
+
+inspections |> 
+  mutate(inspection_date = floor_date(inspection_date, unit = "week")) |> 
+  count(inspection_date, results, wt = total_violations) |> 
+  ggplot(aes(inspection_date, n, colour = results)) +
+  geom_line()
+
+inspections |> 
+  mutate(inspection_date = floor_date(inspection_date, unit = "week")) |> 
+  group_by(inspection_date, facility_type, results) |> 
+  summarise(n = n() * sum(total_violations), .groups = "drop") |> 
+  ggplot(aes(inspection_date, n, colour = results)) +
+  geom_line() +
+  facet_grid(facility_type ~ ., scales = "free_y")
 ```
 
 ## Build a model 🔧
@@ -41,12 +73,18 @@ Train a logistic regression model:
 
 ```{r}
 inspection_rec <- 
-  recipe(results ~ facility_type + risk + total_violations + inspection_date, 
-         data = inspect_train) |> 
-  step_date(inspection_date, features = c("month", "year"), keep_original_cols = FALSE)
+  recipe(
+    results ~ facility_type + risk + total_violations + inspection_date, 
+    data = inspect_train
+    ) |> 
+  step_date(
+    inspection_date, 
+    features = c("month", "year"), 
+    keep_original_cols = FALSE
+    )
 
-inspection_fit <-
-  workflow(inspection_rec, logistic_reg()) |> 
+inspection_fit <- inspection_rec |> 
+  workflow(logistic_reg()) |> 
   fit(data = inspect_train)
 ```
 
@@ -54,12 +92,32 @@ inspection_fit <-
 
 ```{r}
 library(vetiver)
-v <- vetiver_model(___, ___)
+v <- vetiver_model(inspection_fit, "inspection-result-rstats")
 v
 ```
 
 ```{r}
 ## create a vetiver model with a custom description
+
+inspection_rec2 <- 
+  recipe(
+    results ~ facility_type + risk + total_violations + inspection_date, 
+    data = inspect_train
+    ) |> 
+  step_date(
+    inspection_date, 
+    features = c("month", "year", "dow"), 
+    keep_original_cols = FALSE
+    )
+inspection_fit2 <- inspection_rec2 |> 
+  workflow(logistic_reg()) |> 
+  fit(data = inspect_train)
+
+v2 <- vetiver_model(
+  inspection_fit, "inspection-result-rstats-2", 
+  description = "Wohoo"
+  )
+v2
 ```
 
 ## Version your model 📌
@@ -67,13 +125,15 @@ v
 ```{r}
 library(pins)
 
-board <- ___
-board |> ___(v)
+board <- board_folder("pin-warehouse", versioned = TRUE)
+board |> 
+  vetiver_pin_write(v)
 ```
 
 ```{r}
 ## retrieve your model metadata
-board |> pin_meta(___)
+board |> 
+  pin_meta("inspection-result-rstats")
 ```
 
 ## Publish your model on Posit Connect 🚀
@@ -82,8 +142,8 @@ Set up publishing to Connect from RStudio: <https://docs.posit.co/connect/user/p
 
 ```{r}
 ## now write your model pin to Posit Connect
-board <- ___
-board |> ___(v)
+# board <- ___
+# board |> ___(v)
 ```
 
 Visit your pin's homepage on Connect.
@@ -93,20 +153,21 @@ Visit your pin's homepage on Connect.
 Train your model with a new algorithm:
 
 ```{r}
-inspection_fit <-
-  workflow(inspection_rec, ___) |> 
+inspection_fit <- inspection_rec |> 
+  workflow(rand_forest(mode = "classification")) |> 
   fit(data = inspect_train)
 ```
 
 Store this new model as a new version of the same pin:
 
 ```{r}
-v <- vetiver_model(___, ___)
-board |> ___(v)
+v <- vetiver_model(inspection_fit, "inspection-result-rstats")
+board |> vetiver_pin_write(v)
 ```
 
 What versions do you have?
 
 ```{r}
-board |> pin_versions()
+board |> 
+  pin_versions("inspection-result-rstats")
 ```
