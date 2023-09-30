@@ -1,0 +1,16 @@
+file: chicago-inspections-rstats.rds
+file_size: 3771886
+pin_hash: 5b509d3968396297
+type: rds
+title: 'chicago-inspections-rstats: a pinned list'
+description: A ranger classification modeling workflow
+tags: ~
+created: 20230930T203311Z
+api_version: 1
+user:
+  required_pkgs:
+  - parsnip
+  - ranger
+  - recipes
+  - workflows
+  renv_lock: ~

@@ -21,12 +21,18 @@ inspect_train <- training(inspect_split)
 inspect_test <- testing(inspect_split)
 
 inspection_rec <- 
-  recipe(results ~ facility_type + risk + total_violations + inspection_date, 
-         data = inspect_train) |> 
-  step_date(inspection_date, features = c("month", "year"), keep_original_cols = FALSE)
+  recipe(
+    results ~ facility_type + risk + total_violations + inspection_date, 
+    data = inspect_train
+    ) |> 
+  step_date(
+    inspection_date, 
+    features = c("month", "year"), 
+    keep_original_cols = FALSE
+    )
 
-inspection_fit <-
-  workflow(inspection_rec, rand_forest(mode = "classification", trees = 1e3)) |> 
+inspection_fit <- inspection_rec |> 
+  workflow(rand_forest(mode = "classification", trees = 1e3)) |> 
   fit(data = inspect_train)
 ```
 
@@ -36,8 +42,8 @@ Store your model on Posit Connect:
 library(vetiver)
 library(pins)
 
-v <- vetiver_model(___, ___)
-board <- ___
+v <- vetiver_model(inspection_fit, "chicago-inspections-rstats")
+board <- board_folder("pin-warehouse", versioned = TRUE)
 board |> vetiver_pin_write(v)
 ```
 
