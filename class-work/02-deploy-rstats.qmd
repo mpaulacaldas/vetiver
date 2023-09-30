@@ -42,8 +42,8 @@ Store your model on Posit Connect:
 library(vetiver)
 library(pins)
 
-# board_folder() doesn't work for deploying and neither does board_gdrive()
-
+# board_gdrive() doesn't work for deploying, but there may be a workaround
+# with board_folder()
 v <- vetiver_model(inspection_fit, "chicago-inspections-rstats")
 board <- board_folder("pin-warehouse", versioned = TRUE)
 board |> vetiver_pin_write(v)
@@ -71,27 +71,33 @@ Posit Cloud is free! Steps to follow:
 - Add credentials. Go to Posit cloud, click on name at the top-right, go 
   to _Account_, then _Tokens_. Create and add to the IDE (connect button, 
   then _Manage accounts_).
+- `vetiver_deploy_rsconnect()` doesn't work out-of-the-box because it can't 
+  use a local board, but if we copy the board to the bundle. Below is the 
+  process breaking down `vetiver_deploy_rsconnect()`'s internals.
 
 ```{r}
-vetiver_deploy_rsconnect(
-  board, "chicago-inspections-rstats",
-  server = "posit.cloud"
+# vetiver_deploy_rsconnect(
+#   board, "chicago-inspections-rstats",
+#   server = "posit.cloud"
+#   )
+tmp <- fs::dir_create(tempdir(), "vetiver")
+vetiver_write_plumber(
+  board, "chicago-inspections-rstats", 
+  file = fs::path(tmp, "plumber.R")
   )
+fs::dir_copy("pin-warehouse", fs::path(tmp, "pin-warehouse"))
+rsconnect::deployAPI(tmp, appTitle = "chicago-inspections-rstats")
 ```
 
 ## Call your new API endpoints ☎️
 
-Return predictions from your model API:
+Return predictions from your model API. Since I am using Posit Cloud, 
+[this will only work if I call the API from within my projects on Posit Cloud](https://community.rstudio.com/t/public-plumber-api/172557/2).
 
 ```{r}
-url <- "https://posit.cloud/content/6671287/metadata"
-r <- httr::GET(url)
-metadata <- httr::content(r, as = "text", encoding = "UTF-8")
-jsonlite::fromJSON(metadata)
-
-url <- "https://posit.cloud/content/6671287/metadata"
-endpoint <- ___(url)
-predict(___, slice_sample(inspect_test, n = 10))
+url <- "https://a28cdfe6fae745d1a4c54e367fc7c6bd.app.posit.cloud/predict"
+endpoint <- vetiver_endpoint(url)
+predict(endpoint, slice_sample(inspect_test, n = 10))
 ```
 
 Optional: try `/metadata` or `/ping` here:
