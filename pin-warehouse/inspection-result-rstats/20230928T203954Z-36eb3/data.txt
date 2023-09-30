@@ -1,0 +1,16 @@
+file: inspection-result-rstats.rds
+file_size: 1913199
+pin_hash: 36eb3e6cdb16e68c
+type: rds
+title: 'inspection-result-rstats: a pinned list'
+description: A ranger classification modeling workflow
+tags: ~
+created: 20230928T203954Z
+api_version: 1
+user:
+  required_pkgs:
+  - parsnip
+  - ranger
+  - recipes
+  - workflows
+  renv_lock: ~

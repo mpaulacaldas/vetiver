@@ -1,0 +1,16 @@
+file: inspection-result-rstats.rds
+file_size: 935111
+pin_hash: 66e9ed30b8e5621f
+type: rds
+title: 'inspection-result-rstats: a pinned list'
+description: A glm classification modeling workflow
+tags: ~
+created: 20230928T203922Z
+api_version: 1
+user:
+  required_pkgs:
+  - parsnip
+  - recipes
+  - stats
+  - workflows
+  renv_lock: ~
