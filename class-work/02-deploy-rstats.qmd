@@ -42,6 +42,8 @@ Store your model on Posit Connect:
 library(vetiver)
 library(pins)
 
+# board_folder() doesn't work for deploying and neither does board_gdrive()
+
 v <- vetiver_model(inspection_fit, "chicago-inspections-rstats")
 board <- board_folder("pin-warehouse", versioned = TRUE)
 board |> vetiver_pin_write(v)
@@ -72,8 +74,7 @@ Posit Cloud is free! Steps to follow:
 
 ```{r}
 vetiver_deploy_rsconnect(
-  board, 
-  "chicago-inspections-rstats",
+  board, "chicago-inspections-rstats",
   server = "posit.cloud"
   )
 ```
